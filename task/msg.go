@@ -41,37 +41,20 @@ func getQueryPoolInfoReq(poolAddr string) []byte {
 }
 
 type QueryPoolInfoRes struct {
-	Bond                      string      `json:"bond"`
-	Unbond                    string      `json:"unbond"`
-	Active                    string      `json:"active"`
-	LsdToken                  string      `json:"lsd_token"`
-	IcaId                     string      `json:"ica_id"`
-	IbcDenom                  string      `json:"ibc_denom"`
-	ChannelIdOfIbcDenom       string      `json:"channel_id_of_ibc_denom"`
-	RemoteDenom               string      `json:"remote_denom"`
-	ValidatorAddrs            []string    `json:"validator_addrs"`
 	Era                       uint64      `json:"era"`
-	Rate                      string      `json:"rate"`
 	EraSeconds                uint64      `json:"era_seconds"`
 	Offset                    uint64      `json:"offset"`
-	MinimalStake              string      `json:"minimal_stake"`
-	UnstakeTimesLimit         uint64      `json:"unstake_times_limit"`
-	NextUnstakeIndex          uint64      `json:"next_unstake_index"`
-	UnbondingPeriod           uint64      `json:"unbonding_period"`
 	EraProcessStatus          string      `json:"era_process_status"`
 	ValidatorUpdateStatus     string      `json:"validator_update_status"`
-	UnbondCommission          string      `json:"unbond_commission"`
-	PlatformFeeCommission     string      `json:"platform_fee_commission"`
-	TotalPlatformFee          string      `json:"total_platform_fee"`
-	PlatformFeeReceiver       string      `json:"platform_fee_receiver"`
-	Admin                     string      `json:"admin"`
 	ShareTokens               []Coin      `json:"share_tokens"`
 	RedeemmingShareTokenDenom []string    `json:"redeemming_share_token_denom"`
 	EraSnapshot               eraSnapshot `json:"era_snapshot"`
 	Paused                    bool        `json:"paused"`
 	LsmSupport                bool        `json:"lsm_support"`
-	LsmPendingLimit           uint64      `json:"lsm_pending_limit"`
-	RateChangeLimit           string      `json:"rate_change_limit"`
+}
+
+type StackInfoRes struct {
+	Pools []string `json:"pools"`
 }
 
 type eraSnapshot struct {
@@ -86,15 +69,6 @@ type eraSnapshot struct {
 type Coin struct {
 	Denom  string `json:"denom"`
 	Amount string `json:"amount"`
-}
-
-func getQueryPoolInfoRes(data []byte) (*QueryPoolInfoRes, error) {
-	var res QueryPoolInfoRes
-	err := json.Unmarshal(data, &res)
-	if err != nil {
-		return nil, err
-	}
-	return &res, nil
 }
 
 func getEraUpdateMsg(poolAddr string) []byte {
@@ -173,4 +147,39 @@ func getRedeemTokenForShareMsg(poolAddr string, tokens []Coin) []byte {
 	}
 	marshal, _ := json.Marshal(msg)
 	return marshal
+}
+
+func (t *Task) getQueryPoolInfoRes(poolAddr string) (*QueryPoolInfoRes, error) {
+	poolInfoRes, err := t.neutronClient.QuerySmartContractState(t.StakeManager, getQueryPoolInfoReq(poolAddr))
+	if err != nil {
+		return nil, err
+	}
+	var res QueryPoolInfoRes
+	err = json.Unmarshal(poolInfoRes.Data.Bytes(), &res)
+	if err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type StackInfoReq struct{}
+
+func (t *Task) getStackInfoRes() (*StackInfoRes, error) {
+	msg := struct {
+		StackInfoReq `json:"stack_info"`
+	}{}
+	marshal, err := json.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+	stackInfoRes, err := t.neutronClient.QuerySmartContractState(t.StakeManager, marshal)
+	if err != nil {
+		return nil, err
+	}
+	var res StackInfoRes
+	err = json.Unmarshal(stackInfoRes.Data.Bytes(), &res)
+	if err != nil {
+		return nil, err
+	}
+	return &res, nil
 }

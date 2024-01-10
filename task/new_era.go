@@ -5,24 +5,28 @@ import (
 )
 
 func (t *Task) handleNewEra() error {
+	if t.PoolAddr == "" {
+		stackInfo, err := t.getStackInfoRes()
+		if err != nil {
+			return err
+		}
+		for _, pool := range stackInfo.Pools {
+			if err := t.processPoolNewEra(pool); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	return t.processPoolNewEra(t.PoolAddr)
+}
+
+func (t *Task) processPoolNewEra(poolAddr string) error {
 	_, timestamp, err := t.neutronClient.GetCurrentBLockAndTimestamp()
 	if err != nil {
 		return err
 	}
-	if t.PoolAddr == "" {
-		// todo: read the trust pool list
-		return nil
-	}
-
-	return t.processPoolNewEra(t.PoolAddr, uint64(timestamp))
-}
-
-func (t *Task) processPoolNewEra(poolAddr string, timestamp uint64) error {
-	poolInfoRes, err := t.neutronClient.QuerySmartContractState(t.StakeManager, getQueryPoolInfoReq(t.PoolAddr))
-	if err != nil {
-		return err
-	}
-	poolInfo, err := getQueryPoolInfoRes(poolInfoRes.Data.Bytes())
+	poolInfo, err := t.getQueryPoolInfoRes(poolAddr)
 	if err != nil {
 		return err
 	}
@@ -31,7 +35,7 @@ func (t *Task) processPoolNewEra(poolAddr string, timestamp uint64) error {
 	switch poolInfo.EraProcessStatus {
 	case ActiveEnded:
 		// check time to skip
-		era := timestamp/poolInfo.EraSeconds + poolInfo.Offset
+		era := uint64(timestamp)/poolInfo.EraSeconds + poolInfo.Offset
 		if era <= poolInfo.Era {
 			logrus.Warnf("pool %s era %d not end yet \n", poolAddr, era)
 			return nil

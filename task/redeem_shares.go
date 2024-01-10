@@ -7,7 +7,15 @@ import (
 
 func (t *Task) handleRedeemShares() error {
 	if t.PoolAddr == "" {
-		// todo: read the trust pool list
+		stackInfo, err := t.getStackInfoRes()
+		if err != nil {
+			return err
+		}
+		for _, pool := range stackInfo.Pools {
+			if err := t.processPoolRedeemShares(pool); err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 
@@ -15,19 +23,15 @@ func (t *Task) handleRedeemShares() error {
 }
 
 func (t *Task) processPoolRedeemShares(poolAddr string) error {
-	poolInfoRes, err := t.neutronClient.QuerySmartContractState(t.StakeManager, getQueryPoolInfoReq(poolAddr))
+	poolInfo, err := t.getQueryPoolInfoRes(poolAddr)
 	if err != nil {
 		return err
 	}
-	res, err := getQueryPoolInfoRes(poolInfoRes.Data.Bytes())
-	if err != nil {
-		return err
-	}
-	if len(res.ShareTokens) > 0 {
+	if len(poolInfo.ShareTokens) > 0 {
 		var coins []Coin
-		for _, k := range res.ShareTokens {
+		for _, k := range poolInfo.ShareTokens {
 			shareToken := k
-			if utils.ContainsString(res.RedeemmingShareTokenDenom, shareToken.Denom) {
+			if utils.ContainsString(poolInfo.RedeemmingShareTokenDenom, shareToken.Denom) {
 				continue
 			}
 			coins = append(coins, shareToken)

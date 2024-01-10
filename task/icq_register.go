@@ -4,7 +4,15 @@ import "github.com/sirupsen/logrus"
 
 func (t *Task) handleICQRegister() error {
 	if t.PoolAddr == "" {
-		// todo: read the trust pool list
+		stackInfo, err := t.getStackInfoRes()
+		if err != nil {
+			return err
+		}
+		for _, pool := range stackInfo.Pools {
+			if err := t.processICQRegister(pool); err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 
@@ -12,15 +20,11 @@ func (t *Task) handleICQRegister() error {
 }
 
 func (t *Task) processICQRegister(poolAddr string) error {
-	poolInfoRes, err := t.neutronClient.QuerySmartContractState(t.StakeManager, getQueryPoolInfoReq(poolAddr))
+	poolInfo, err := t.getQueryPoolInfoRes(poolAddr)
 	if err != nil {
 		return err
 	}
-	res, err := getQueryPoolInfoRes(poolInfoRes.Data.Bytes())
-	if err != nil {
-		return err
-	}
-	if res.EraProcessStatus == WaitQueryUpdate {
+	if poolInfo.EraProcessStatus == WaitQueryUpdate {
 		return nil
 	}
 
