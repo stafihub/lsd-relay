@@ -1,6 +1,7 @@
 package task
 
 import (
+	"errors"
 	"os"
 	"time"
 
@@ -15,20 +16,27 @@ import (
 )
 
 type Task struct {
-	taskTicker    uint32
-	stop          chan struct{}
-	neutronClient *client.Client
-
-	PoolAddr     string
-	StakeManager string
+	taskTicker          uint32
+	stop                chan struct{}
+	neutronClient       *client.Client
+	runForEntrustedPool bool
+	poolAddr            string
+	stakeManager        string
 }
 
 func NewTask(cfg *config.Config) (*Task, error) {
+	if cfg.StakeManager == "" {
+		return nil, errors.New("stake manager is empty")
+	}
+	if cfg.PoolAddr == "" && !cfg.RunForEntrustedPool {
+		return nil, errors.New("pool addr is empty")
+	}
 	s := &Task{
-		taskTicker:   cfg.TaskTicker,
-		stop:         make(chan struct{}),
-		PoolAddr:     cfg.PoolAddr,
-		StakeManager: cfg.StakeManager,
+		taskTicker:          cfg.TaskTicker,
+		stop:                make(chan struct{}),
+		poolAddr:            cfg.PoolAddr,
+		stakeManager:        cfg.StakeManager,
+		runForEntrustedPool: cfg.RunForEntrustedPool,
 	}
 
 	kr, err := keyring.New("neutron", keyring.BackendTest, cfg.KeystorePath, os.Stdin, client.MakeEncodingConfig().Marshaler)

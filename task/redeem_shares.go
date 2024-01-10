@@ -6,7 +6,7 @@ import (
 )
 
 func (t *Task) handleRedeemShares() error {
-	if t.PoolAddr == "" {
+	if t.runForEntrustedPool {
 		stackInfo, err := t.getStackInfoRes()
 		if err != nil {
 			return err
@@ -19,7 +19,7 @@ func (t *Task) handleRedeemShares() error {
 		return nil
 	}
 
-	return t.processPoolRedeemShares(t.PoolAddr)
+	return t.processPoolRedeemShares(t.poolAddr)
 }
 
 func (t *Task) processPoolRedeemShares(poolAddr string) error {
@@ -36,8 +36,8 @@ func (t *Task) processPoolRedeemShares(poolAddr string) error {
 			}
 			coins = append(coins, shareToken)
 		}
-		msg := getRedeemTokenForShareMsg(t.PoolAddr, coins)
-		txHash, err := t.neutronClient.SendContractExecuteMsg(t.StakeManager, msg, nil)
+		msg := getRedeemTokenForShareMsg(t.poolAddr, coins)
+		txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, msg, nil)
 		if err != nil {
 			return err
 		}

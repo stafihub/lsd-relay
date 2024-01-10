@@ -7,3 +7,4 @@ poolAddr=""
 stakeManager=""
 keyName=""
 backendOptions="test"
+runForEntrustedPool=false

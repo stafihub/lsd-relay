@@ -5,7 +5,7 @@ import (
 )
 
 func (t *Task) handleNewEra() error {
-	if t.PoolAddr == "" {
+	if t.runForEntrustedPool {
 		stackInfo, err := t.getStackInfoRes()
 		if err != nil {
 			return err
@@ -18,7 +18,7 @@ func (t *Task) handleNewEra() error {
 		return nil
 	}
 
-	return t.processPoolNewEra(t.PoolAddr)
+	return t.processPoolNewEra(t.poolAddr)
 }
 
 func (t *Task) processPoolNewEra(poolAddr string) error {
@@ -50,10 +50,10 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 	case RestakeEnded:
 		msg = getEraActiveMsg(poolAddr)
 	default:
-		logrus.Debugf("pool %s era status %s \n", t.PoolAddr, poolInfo.EraProcessStatus)
+		logrus.Debugf("pool %s era status %s \n", t.poolAddr, poolInfo.EraProcessStatus)
 	}
 
-	txHash, err := t.neutronClient.SendContractExecuteMsg(t.StakeManager, msg, nil)
+	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, msg, nil)
 	if err != nil {
 		return err
 	}

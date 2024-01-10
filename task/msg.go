@@ -150,7 +150,7 @@ func getRedeemTokenForShareMsg(poolAddr string, tokens []Coin) []byte {
 }
 
 func (t *Task) getQueryPoolInfoRes(poolAddr string) (*QueryPoolInfoRes, error) {
-	poolInfoRes, err := t.neutronClient.QuerySmartContractState(t.StakeManager, getQueryPoolInfoReq(poolAddr))
+	poolInfoRes, err := t.neutronClient.QuerySmartContractState(t.stakeManager, getQueryPoolInfoReq(poolAddr))
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func (t *Task) getStackInfoRes() (*StackInfoRes, error) {
 	if err != nil {
 		return nil, err
 	}
-	stackInfoRes, err := t.neutronClient.QuerySmartContractState(t.StakeManager, marshal)
+	stackInfoRes, err := t.neutronClient.QuerySmartContractState(t.stakeManager, marshal)
 	if err != nil {
 		return nil, err
 	}

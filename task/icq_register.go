@@ -3,7 +3,7 @@ package task
 import "github.com/sirupsen/logrus"
 
 func (t *Task) handleICQRegister() error {
-	if t.PoolAddr == "" {
+	if t.runForEntrustedPool {
 		stackInfo, err := t.getStackInfoRes()
 		if err != nil {
 			return err
@@ -16,7 +16,7 @@ func (t *Task) handleICQRegister() error {
 		return nil
 	}
 
-	return t.processICQRegister(t.PoolAddr)
+	return t.processICQRegister(t.poolAddr)
 }
 
 func (t *Task) processICQRegister(poolAddr string) error {
@@ -29,7 +29,7 @@ func (t *Task) processICQRegister(poolAddr string) error {
 	}
 
 	msg := getDelegationICQRegisterMsg(poolAddr)
-	txHash, err := t.neutronClient.SendContractExecuteMsg(t.StakeManager, msg, nil)
+	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, msg, nil)
 	if err != nil {
 		return err
 	}
