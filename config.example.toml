@@ -1,0 +1,9 @@
+endpointList = ["http://127.0.0.1:26657"]
+logFilePath = ""
+gasPrice="0.005untrn"
+taskTicker = 30  # minutes
+keystorePath = ""
+poolAddr=""
+stakeManager=""
+keyName=""
+backendOptions="test"
