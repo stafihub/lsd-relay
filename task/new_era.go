@@ -30,7 +30,6 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("process pool: %+v \n", poolInfo)
 	var msg []byte
 	switch poolInfo.EraProcessStatus {
 	case ActiveEnded:

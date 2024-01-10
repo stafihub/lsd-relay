@@ -41,3 +41,4 @@ datas/
 /log_file
 /log_data
 /blockstore
+__debug*

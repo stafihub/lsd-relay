@@ -27,6 +27,9 @@ func (t *Task) processPoolRedeemShares(poolAddr string) error {
 	if err != nil {
 		return err
 	}
+	if !poolInfo.LsmSupport {
+		return nil
+	}
 	if len(poolInfo.ShareTokens) > 0 {
 		var coins []Coin
 		for _, k := range poolInfo.ShareTokens {

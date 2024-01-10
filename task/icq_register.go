@@ -24,7 +24,7 @@ func (t *Task) processICQRegister(poolAddr string) error {
 	if err != nil {
 		return err
 	}
-	if poolInfo.EraProcessStatus == WaitQueryUpdate {
+	if poolInfo.EraProcessStatus != WaitQueryUpdate {
 		return nil
 	}
 
