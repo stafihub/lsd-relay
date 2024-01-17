@@ -6,15 +6,16 @@ import (
 
 // EraProcessStatus
 const (
-	EraUpdateStarted = "era_update_started"
-	EraUpdateEnded   = "era_update_ended"
-	BondStarted      = "bond_started"
-	BondEnded        = "bond_ended"
-	WithdrawStarted  = "withdraw_started"
-	WithdrawEnded    = "withdraw_ended"
-	RestakeStarted   = "restake_started"
-	RestakeEnded     = "restake_ended"
-	ActiveEnded      = "active_ended"
+	EraPreprocessEnded = "era_preprocess_ended"
+	EraUpdateStarted   = "era_update_started"
+	EraUpdateEnded     = "era_update_ended"
+	BondStarted        = "bond_started"
+	BondEnded          = "bond_ended"
+	WithdrawStarted    = "withdraw_started"
+	WithdrawEnded      = "withdraw_ended"
+	RestakeStarted     = "restake_started"
+	RestakeEnded       = "restake_ended"
+	ActiveEnded        = "active_ended"
 )
 
 // ValidatorUpdateStatus
@@ -69,6 +70,16 @@ type eraSnapshot struct {
 type Coin struct {
 	Denom  string `json:"denom"`
 	Amount string `json:"amount"`
+}
+
+func getEraPreProcessMsg(poolAddr string) []byte {
+	eraUpdateMsg := struct {
+		PoolAddr `json:"era_pre_process"`
+	}{
+		PoolAddr: PoolAddr{Addr: poolAddr},
+	}
+	marshal, _ := json.Marshal(eraUpdateMsg)
+	return marshal
 }
 
 func getEraUpdateMsg(poolAddr string) []byte {

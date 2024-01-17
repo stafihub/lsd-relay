@@ -39,6 +39,14 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 			logrus.Warnf("pool %s era %d not end yet \n", poolAddr, era)
 			return nil
 		}
+		msg = getEraPreProcessMsg(poolAddr)
+	case EraPreprocessEnded:
+		// check time to skip
+		era := uint64(timestamp)/poolInfo.EraSeconds + poolInfo.Offset
+		if era <= poolInfo.Era {
+			logrus.Warnf("pool %s era %d not end yet \n", poolAddr, era)
+			return nil
+		}
 		msg = getEraUpdateMsg(poolAddr)
 	case EraUpdateEnded:
 		msg = getEraBondMsg(poolAddr)
@@ -49,14 +57,14 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 	case RestakeEnded:
 		msg = getEraActiveMsg(poolAddr)
 	default:
-		logrus.Debugf("pool %s era status %s \n", t.poolAddr, poolInfo.EraProcessStatus)
+		logrus.Debugf("pool %s era status %s \n", poolAddr, poolInfo.EraProcessStatus)
 	}
 
 	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, msg, nil)
 	if err != nil {
 		return err
 	}
-	logrus.Infof("pool %s era status %s tx %s send success \n", t.poolAddr, poolInfo.EraProcessStatus, txHash)
+	logrus.Infof("pool %s era status %s tx %s send success \n", poolAddr, poolInfo.EraProcessStatus, txHash)
 
 	return nil
 }
