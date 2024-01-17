@@ -6,20 +6,20 @@ import (
 
 // EraProcessStatus
 const (
-	EraUpdateStarted = "EraUpdateStarted"
-	EraUpdateEnded   = "EraUpdateEnded"
-	BondStarted      = "BondStarted"
-	BondEnded        = "BondEnded"
-	WithdrawStarted  = "WithdrawStarted"
-	WithdrawEnded    = "WithdrawEnded"
-	RestakeStarted   = "RestakeStarted"
-	RestakeEnded     = "RestakeEnded"
-	ActiveEnded      = "ActiveEnded"
+	EraUpdateStarted = "era_update_started"
+	EraUpdateEnded   = "era_update_ended"
+	BondStarted      = "bond_started"
+	BondEnded        = "bond_ended"
+	WithdrawStarted  = "withdraw_started"
+	WithdrawEnded    = "withdraw_ended"
+	RestakeStarted   = "restake_started"
+	RestakeEnded     = "restake_ended"
+	ActiveEnded      = "active_ended"
 )
 
 // ValidatorUpdateStatus
 const (
-	WaitQueryUpdate = "WaitQueryUpdate"
+	WaitQueryUpdate = "wait_query_update"
 )
 
 type PoolAddr struct {

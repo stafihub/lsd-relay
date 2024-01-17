@@ -56,7 +56,7 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 	if err != nil {
 		return err
 	}
-	logrus.Infof("tx %s send success \n", txHash)
+	logrus.Infof("pool %s era status %s tx %s send success \n", t.poolAddr, poolInfo.EraProcessStatus, txHash)
 
 	return nil
 }
