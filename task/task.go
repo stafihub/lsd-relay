@@ -56,7 +56,7 @@ func NewTask(cfg *config.Config) (*Task, error) {
 func (t *Task) Start() error {
 	utils.SafeGoWithRestart(t.newEraHandler)
 	utils.SafeGoWithRestart(t.redeemTokenHandler)
-	utils.SafeGoWithRestart(t.icqRegisterHandle)
+	utils.SafeGoWithRestart(t.icqUpdateHandle)
 	return nil
 }
 
@@ -120,13 +120,13 @@ func (t *Task) redeemTokenHandler() {
 	}
 }
 
-func (t *Task) icqRegisterHandle() {
-	logrus.Debug("icqRegisterHandle start -----------")
+func (t *Task) icqUpdateHandle() {
+	logrus.Debug("icqUpdateHandle start -----------")
 	logrus.Info("start icq register Handler")
 
-	err := t.handleICQRegister()
+	err := t.handleIcqUpdate()
 	if err != nil {
-		logrus.Warnf("icqRegisterHandle failed, err: %s", err.Error())
+		logrus.Warnf("icqUpdateHandle failed, err: %s", err.Error())
 	}
 
 	ticker := time.NewTicker(time.Duration(t.taskTicker) * time.Minute)
@@ -138,12 +138,12 @@ func (t *Task) icqRegisterHandle() {
 			logrus.Info("icq register task has stopped")
 			return
 		case <-ticker.C:
-			err := t.handleICQRegister()
+			err := t.handleIcqUpdate()
 			if err != nil {
-				logrus.Warnf("icqRegisterHandle failed, err: %s", err.Error())
+				logrus.Warnf("icqUpdateHandle failed, err: %s", err.Error())
 				continue
 			}
-			logrus.Debug("icqRegisterHandle end -----------")
+			logrus.Debug("icqUpdateHandle end -----------")
 		}
 	}
 }

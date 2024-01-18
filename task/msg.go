@@ -132,9 +132,9 @@ func getEraActiveMsg(poolAddr string) []byte {
 	return marshal
 }
 
-func getDelegationICQRegisterMsg(poolAddr string) []byte {
+func getPoolUpdateQueryExecuteMsg(poolAddr string) []byte {
 	msg := struct {
-		PoolAddr `json:"pool_update_delegations_query"`
+		PoolAddr `json:"pool_update_query"`
 	}{
 		PoolAddr: PoolAddr{Addr: poolAddr},
 	}
