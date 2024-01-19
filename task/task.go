@@ -44,7 +44,7 @@ func NewTask(cfg *config.Config) (*Task, error) {
 		return nil, err
 	}
 
-	c, err := client.NewClient(kr, cfg.KeyName, cfg.GasPrice, "neutron", cfg.EndpointList, log.NewLog("client", "neutron-relay"))
+	c, err := client.NewClient(kr, cfg.KeyName, cfg.GasPrice, "neutron", cfg.EndpointList, log.NewLog("client", "lsd-relay"))
 	if err != nil {
 		return nil, err
 	}
@@ -65,15 +65,15 @@ func (t *Task) Stop() {
 }
 
 func (t *Task) newEraHandler() {
-	logrus.Debug("newEraHandler start -----------")
 	logrus.Info("start new era Handler")
+	logrus.Debug("----------- newEraHandler start -----------")
 
 	err := t.handleNewEra()
 	if err != nil {
 		logrus.Warnf("newEraHandler failed, err: %s", err.Error())
 	}
 
-	ticker := time.NewTicker(time.Duration(t.taskTicker) * time.Minute)
+	ticker := time.NewTicker(time.Duration(t.taskTicker) * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -87,21 +87,21 @@ func (t *Task) newEraHandler() {
 				logrus.Warnf("newEraHandler failed, err: %s", err.Error())
 				continue
 			}
-			logrus.Debug("newEraHandler end -----------")
+			logrus.Debug("----------- newEraHandler end -----------")
 		}
 	}
 }
 
 func (t *Task) redeemTokenHandler() {
-	logrus.Debug("redeemTokenHandler start -----------")
 	logrus.Info("start redeem token Handler")
+	logrus.Debug("----------- redeemTokenHandler start -----------")
 
 	err := t.handleRedeemShares()
 	if err != nil {
 		logrus.Warnf("redeemTokenHandler failed, err: %s", err.Error())
 	}
 
-	ticker := time.NewTicker(time.Duration(t.taskTicker) * time.Minute)
+	ticker := time.NewTicker(time.Duration(t.taskTicker) * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -115,21 +115,21 @@ func (t *Task) redeemTokenHandler() {
 				logrus.Warnf("redeemTokenHandler failed, err: %s", err.Error())
 				continue
 			}
-			logrus.Debug("redeemTokenHandler end -----------")
+			logrus.Debug("----------- redeemTokenHandler end -----------")
 		}
 	}
 }
 
 func (t *Task) icqUpdateHandle() {
-	logrus.Debug("icqUpdateHandle start -----------")
 	logrus.Info("start icq register Handler")
+	logrus.Debug("----------- icqUpdateHandle start -----------")
 
 	err := t.handleIcqUpdate()
 	if err != nil {
 		logrus.Warnf("icqUpdateHandle failed, err: %s", err.Error())
 	}
 
-	ticker := time.NewTicker(time.Duration(t.taskTicker) * time.Minute)
+	ticker := time.NewTicker(time.Duration(t.taskTicker) * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -143,7 +143,7 @@ func (t *Task) icqUpdateHandle() {
 				logrus.Warnf("icqUpdateHandle failed, err: %s", err.Error())
 				continue
 			}
-			logrus.Debug("icqUpdateHandle end -----------")
+			logrus.Debug("----------- icqUpdateHandle end -----------")
 		}
 	}
 }

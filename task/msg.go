@@ -6,17 +6,24 @@ import (
 
 // EraProcessStatus
 const (
-	EraPreprocessEnded = "era_preprocess_ended"
-	EraUpdateStarted   = "era_update_started"
-	EraUpdateEnded     = "era_update_ended"
-	BondStarted        = "bond_started"
-	BondEnded          = "bond_ended"
-	WithdrawStarted    = "withdraw_started"
-	WithdrawEnded      = "withdraw_ended"
-	RestakeStarted     = "restake_started"
-	RestakeEnded       = "restake_ended"
-	ActiveEnded        = "active_ended"
+	EraUpdateStarted = "era_update_started"
+	EraUpdateEnded   = "era_update_ended"
+	BondStarted      = "bond_started"
+	BondEnded        = "bond_ended"
+	WithdrawStarted  = "withdraw_started"
+	WithdrawEnded    = "withdraw_ended"
+	RestakeStarted   = "restake_started"
+	RestakeEnded     = "restake_ended"
+	ActiveEnded      = "active_ended"
 )
+
+var StatusForExecute = map[string]string{
+	ActiveEnded:    "era_update",
+	EraUpdateEnded: "era_bond",
+	BondEnded:      "era_withdraw_collect",
+	WithdrawEnded:  "era_restake",
+	RestakeEnded:   "era_active",
+}
 
 // ValidatorUpdateStatus
 const (
@@ -42,9 +49,15 @@ func getQueryPoolInfoReq(poolAddr string) []byte {
 }
 
 type QueryPoolInfoRes struct {
+	IcaId                     string      `json:"ica_id"`
 	Era                       uint64      `json:"era"`
 	EraSeconds                uint64      `json:"era_seconds"`
 	Offset                    uint64      `json:"offset"`
+	Bond                      string      `json:"bond"`
+	Unbond                    string      `json:"unbond"`
+	Active                    string      `json:"active"`
+	Rate                      string      `json:"rate"`
+	RateChangeLimit           string      `json:"rate_change_limit"`
 	EraProcessStatus          string      `json:"era_process_status"`
 	ValidatorUpdateStatus     string      `json:"validator_update_status"`
 	ShareTokens               []Coin      `json:"share_tokens"`
@@ -70,16 +83,6 @@ type eraSnapshot struct {
 type Coin struct {
 	Denom  string `json:"denom"`
 	Amount string `json:"amount"`
-}
-
-func getEraPreProcessMsg(poolAddr string) []byte {
-	eraUpdateMsg := struct {
-		PoolAddr `json:"era_pre_process"`
-	}{
-		PoolAddr: PoolAddr{Addr: poolAddr},
-	}
-	marshal, _ := json.Marshal(eraUpdateMsg)
-	return marshal
 }
 
 func getEraUpdateMsg(poolAddr string) []byte {
@@ -193,4 +196,22 @@ func (t *Task) getStackInfoRes() (*StackInfoRes, error) {
 		return nil, err
 	}
 	return &res, nil
+}
+
+type UpdateIcqUpdatePeriodMsg struct {
+	Addr            string `json:"pool_addr"`
+	NewUpdatePeriod uint64 `json:"new_update_period"`
+}
+
+func getEraUpdatePeriodMsg(poolAddr string, period uint64) []byte {
+	msg := struct {
+		UpdateIcqUpdatePeriodMsg `json:"update_icq_update_period"`
+	}{
+		UpdateIcqUpdatePeriodMsg: UpdateIcqUpdatePeriodMsg{
+			Addr:            poolAddr,
+			NewUpdatePeriod: period,
+		},
+	}
+	marshal, _ := json.Marshal(msg)
+	return marshal
 }

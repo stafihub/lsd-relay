@@ -1,7 +1,11 @@
 package task
 
 import (
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"strings"
+	"sync"
+	"time"
 )
 
 func (t *Task) handleNewEra() error {
@@ -10,11 +14,16 @@ func (t *Task) handleNewEra() error {
 		if err != nil {
 			return err
 		}
-		for _, pool := range stackInfo.Pools {
-			if err := t.processPoolNewEra(pool); err != nil {
-				return err
-			}
+		wg := sync.WaitGroup{}
+		for _, poolAddr := range stackInfo.Pools {
+			wg.Add(1)
+			poolAddr := poolAddr
+			go func(addr string) {
+				defer wg.Done()
+				_ = t.processPoolNewEra(addr)
+			}(poolAddr)
 		}
+		wg.Wait()
 		return nil
 	}
 
@@ -30,21 +39,46 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 	if err != nil {
 		return err
 	}
+	targetEra := uint64(timestamp)/poolInfo.EraSeconds + poolInfo.Offset
+
+	logrus.Infof(
+		"Pool Information:\n"+
+			"  - Pool Address: %s\n"+
+			"  - Pool ICA ID: %s\n"+
+			"  - Current Era: %d\n"+
+			"  - Target Era: %d\n"+
+			"  - Era Second: %d\n"+
+			"  - Rate: %s\n"+
+			"  - RateChangeLimit: %s\n"+
+			"  - EraProcessStatus: %s\n"+
+			"  - Bond: %s\n"+
+			"  - ErSnapshot.Bond: %s\n"+
+			"  - Unbond: %s\n"+
+			"  - ErSnapshot.Unbond: %s\n"+
+			"  - Active: %s\n"+
+			"  - ErSnapshot.Active: %s\n",
+		poolAddr,
+		poolInfo.IcaId,
+		poolInfo.Era,
+		targetEra,
+		poolInfo.EraSeconds,
+		poolInfo.Rate,
+		poolInfo.RateChangeLimit,
+		poolInfo.EraProcessStatus,
+		poolInfo.Bond,
+		poolInfo.EraSnapshot.Bond,
+		poolInfo.Unbond,
+		poolInfo.EraSnapshot.Unbond,
+		poolInfo.Active,
+		poolInfo.EraSnapshot.Active,
+	)
+
 	var msg []byte
 	switch poolInfo.EraProcessStatus {
 	case ActiveEnded:
-		// check time to skip
-		era := uint64(timestamp)/poolInfo.EraSeconds + poolInfo.Offset
-		if era <= poolInfo.Era {
-			logrus.Warnf("pool %s era %d not end yet \n", poolAddr, era)
-			return nil
-		}
-		msg = getEraPreProcessMsg(poolAddr)
-	case EraPreprocessEnded:
-		// check time to skip
-		era := uint64(timestamp)/poolInfo.EraSeconds + poolInfo.Offset
-		if era <= poolInfo.Era {
-			logrus.Warnf("pool %s era %d not end yet \n", poolAddr, era)
+		// check targetEra to skip
+		if targetEra <= poolInfo.Era {
+			logrus.Infof("pool %s era %d not end yet \n", poolAddr, poolInfo.Era)
 			return nil
 		}
 		msg = getEraUpdateMsg(poolAddr)
@@ -57,14 +91,38 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 	case RestakeEnded:
 		msg = getEraActiveMsg(poolAddr)
 	default:
-		logrus.Debugf("pool %s era status %s \n", poolAddr, poolInfo.EraProcessStatus)
+		logrus.Infof("pool %s era status %s \n skip", poolAddr, poolInfo.EraProcessStatus)
 	}
 
-	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, msg, nil)
-	if err != nil {
-		return err
+	retry := 0
+	for {
+		var err error
+		if retry > 10 {
+			updatePeriodMsg := getEraUpdatePeriodMsg(poolAddr, 12)
+			txHash, e := t.neutronClient.SendContractExecuteMsg(t.stakeManager, updatePeriodMsg, nil)
+			if e != nil {
+				return errors.Wrap(err, e.Error())
+			}
+			logrus.Infof("pool %s execute update_icq_update_period tx %s send success \n", poolAddr, txHash)
+			time.Sleep(time.Second * 20)
+		}
+		if retry > 15 {
+			return err
+		}
+		txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, msg, nil)
+		if err != nil {
+			logrus.Warnf("pool %s execute %s failed, err: %s \n", poolAddr, StatusForExecute[poolInfo.EraProcessStatus], err.Error())
+			if strings.Contains(err.Error(), "SubmissionHeight") {
+				retry++
+				time.Sleep(time.Second * 3)
+				continue
+			} else {
+				return err
+			}
+		}
+		logrus.Infof("pool %s execute %s tx %s send success \n", poolAddr, StatusForExecute[poolInfo.EraProcessStatus], txHash)
+		break
 	}
-	logrus.Infof("pool %s era status %s tx %s send success \n", poolAddr, poolInfo.EraProcessStatus, txHash)
 
 	return nil
 }
