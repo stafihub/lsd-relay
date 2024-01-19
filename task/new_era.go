@@ -1,11 +1,8 @@
 package task
 
 import (
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"strings"
 	"sync"
-	"time"
 )
 
 func (t *Task) handleNewEra() error {
@@ -94,35 +91,13 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 		logrus.Infof("pool %s era status %s \n skip", poolAddr, poolInfo.EraProcessStatus)
 	}
 
-	retry := 0
-	for {
-		var err error
-		if retry > 10 {
-			updatePeriodMsg := getEraUpdatePeriodMsg(poolAddr, 12)
-			txHash, e := t.neutronClient.SendContractExecuteMsg(t.stakeManager, updatePeriodMsg, nil)
-			if e != nil {
-				return errors.Wrap(err, e.Error())
-			}
-			logrus.Infof("pool %s execute update_icq_update_period tx %s send success \n", poolAddr, txHash)
-			time.Sleep(time.Second * 20)
-		}
-		if retry > 15 {
-			return err
-		}
-		txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, msg, nil)
-		if err != nil {
-			logrus.Warnf("pool %s execute %s failed, err: %s \n", poolAddr, StatusForExecute[poolInfo.EraProcessStatus], err.Error())
-			if strings.Contains(err.Error(), "SubmissionHeight") {
-				retry++
-				time.Sleep(time.Second * 3)
-				continue
-			} else {
-				return err
-			}
-		}
-		logrus.Infof("pool %s execute %s tx %s send success \n", poolAddr, StatusForExecute[poolInfo.EraProcessStatus], txHash)
-		break
+	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, msg, nil)
+	if err != nil {
+		logrus.Warnf("pool %s execute %s failed, err: %s \n", poolAddr, StatusForExecute[poolInfo.EraProcessStatus], err.Error())
+		return err
 	}
+
+	logrus.Infof("pool %s execute %s tx %s send success \n", poolAddr, StatusForExecute[poolInfo.EraProcessStatus], txHash)
 
 	return nil
 }
