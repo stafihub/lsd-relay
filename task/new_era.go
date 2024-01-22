@@ -160,7 +160,7 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 				logger.WithFields(logrus.Fields{
 					"new rate": poolNewInfo.Rate,
 				}).
-					Infof("new era task has complete")
+					Infof("the new era task has been completed")
 				break
 			}
 		}
