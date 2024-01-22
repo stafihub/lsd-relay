@@ -112,7 +112,7 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 		}).Infoln("start withdraw-collect")
 	case WithdrawEnded:
 		if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.BondHeight) {
-			logger.Warnln("withdraw address balance icq query not ready")
+			logger.Warnln("delegation icq query not ready")
 			return nil
 		}
 		txHash, err = t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraRestakeMsg(poolAddr), nil)
