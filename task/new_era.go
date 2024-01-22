@@ -56,10 +56,10 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 	targetEra := uint64(timestamp)/poolInfo.EraSeconds + poolInfo.Offset
 
 	logger := logrus.WithFields(logrus.Fields{
-		"pool":        poolAddr,
-		"current era": poolInfo.Era,
-		"new era":     poolInfo.Era + 1,
-		"target era":  targetEra,
+		"pool":       poolAddr,
+		"old era":    poolInfo.Era,
+		"new era":    poolInfo.Era + 1,
+		"target era": targetEra,
 	})
 
 	poolIca, err := t.getPoolIcaInfo(poolInfo.IcaId)
