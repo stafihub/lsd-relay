@@ -137,7 +137,7 @@ func getEraActiveMsg(poolAddr string) []byte {
 
 func getPoolUpdateQueryExecuteMsg(poolAddr string) []byte {
 	msg := struct {
-		PoolAddr `json:"pool_update_query"`
+		PoolAddr `json:"pool_update_validators_icq"`
 	}{
 		PoolAddr: PoolAddr{Addr: poolAddr},
 	}
