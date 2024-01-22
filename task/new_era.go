@@ -76,7 +76,6 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 	case ActiveEnded:
 		// check targetEra to skip
 		if targetEra <= poolInfo.Era {
-			logger.Infoln("current era not end yet")
 			return nil
 		}
 
