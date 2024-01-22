@@ -29,7 +29,21 @@ func (t *Task) handleNewEra() error {
 	return t.processPoolNewEra(t.poolAddr)
 }
 
+func (t *Task) checkIcqSubmitHeight(icaAddr, queryKind string, lastStepHeight uint64) bool {
+
+	query, err := t.getRegisteredIcqQuery(icaAddr, queryKind)
+	if err != nil {
+		return false
+	}
+	if query.RegisteredQuery.LastSubmittedResultLocalHeight < lastStepHeight {
+		return false
+	}
+
+	return true
+}
+
 func (t *Task) processPoolNewEra(poolAddr string) error {
+	var err error
 	_, timestamp, err := t.neutronClient.GetCurrentBLockAndTimestamp()
 	if err != nil {
 		return err
@@ -38,9 +52,26 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 	if err != nil {
 		return err
 	}
+
 	targetEra := uint64(timestamp)/poolInfo.EraSeconds + poolInfo.Offset
 
-	var msg []byte
+	logger := logrus.WithFields(logrus.Fields{
+		"pool":        poolAddr,
+		"current era": poolInfo.Era,
+		"new era":     poolInfo.Era + 1,
+		"target era":  targetEra,
+	})
+
+	poolIca, err := t.getPoolIcaInfo(poolInfo.IcaId)
+	if err != nil {
+		return err
+	}
+	if len(poolIca) < 2 {
+		logger.Warnln("ica data query failed")
+		return nil
+	}
+
+	var txHash string
 	switch poolInfo.EraProcessStatus {
 	case ActiveEnded:
 		// check targetEra to skip
@@ -48,46 +79,93 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 			logrus.Infof("pool %s era %d not end yet \n", poolAddr, poolInfo.Era)
 			return nil
 		}
-		logrus.Infof("pool-%s start new era update: old era: %d new era: %d current rate: %s target era: %d \n",
-			poolAddr, poolInfo.Era, poolInfo.Era+1, poolInfo.Rate, targetEra)
-		msg = getEraUpdateMsg(poolAddr)
+
+		txHash, err = t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraUpdateMsg(poolAddr), nil)
+		logger.WithFields(logrus.Fields{
+			"current status": poolInfo.EraProcessStatus,
+			"current rate":   poolInfo.Rate,
+			"tx hash":        txHash,
+		}).Infoln("start era-update")
+
 	case EraUpdateEnded:
-		logrus.Infof("pool-%s start new era bond: old era: %d new era: %d snapshot bond: %s snapshot unbond: %s \n",
-			poolAddr, poolInfo.Era, poolInfo.Era+1, poolInfo.EraSnapshot.Bond, poolInfo.EraSnapshot.Unbond)
-		msg = getEraBondMsg(poolAddr)
+		if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.BondHeight) {
+			logger.Warnln("delegation icq query not ready")
+			return nil
+		}
+		txHash, err = t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraBondMsg(poolAddr), nil)
+		logger.WithFields(logrus.Fields{
+			"current status":  poolInfo.EraProcessStatus,
+			"current rate":    poolInfo.Rate,
+			"snapshot bond":   poolInfo.EraSnapshot.Bond,
+			"snapshot unbond": poolInfo.EraSnapshot.Unbond,
+			"tx hash":         txHash,
+		}).Infoln("start bond")
 	case BondEnded:
-		logrus.Infof("pool-%s start new era collect withdraw to pool: old era: %d new era: %d \n",
-			poolAddr, poolInfo.Era, poolInfo.Era+1)
-		msg = getEraCollectWithdrawMsg(poolAddr)
+		if !t.checkIcqSubmitHeight(poolIca[1].IcaAddr, BalancesQueryKind, poolInfo.EraSnapshot.BondHeight) {
+			logger.Warnln("withdraw address balance icq query not ready")
+			return nil
+		}
+		txHash, err = t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraCollectWithdrawMsg(poolAddr), nil)
+		logger.WithFields(logrus.Fields{
+			"current status": poolInfo.EraProcessStatus,
+			"current rate":   poolInfo.Rate,
+			"tx hash":        txHash,
+		}).Infoln("start withdraw-collect")
 	case WithdrawEnded:
-		logrus.Infof("pool-%s start pool restake: old era: %d new era: %d \n",
-			poolAddr, poolInfo.Era, poolInfo.Era+1)
-		msg = getEraRestakeMsg(poolAddr)
+		if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.BondHeight) {
+			logger.Warnln("withdraw address balance icq query not ready")
+			return nil
+		}
+		txHash, err = t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraRestakeMsg(poolAddr), nil)
+		logger.WithFields(logrus.Fields{
+			"current status": poolInfo.EraProcessStatus,
+			"current rate":   poolInfo.Rate,
+			"tx hash":        txHash,
+		}).Infoln("start restake")
 	case RestakeEnded:
-		logrus.Infof("pool-%s start new era active: old era: %d new era: %d target era: %d snapshot bond: %s snapshot unbond: %s snapshot active: %s real-time bond: %s real-time unbond: %s real-time active: %s \n",
-			poolAddr, poolInfo.Era, poolInfo.Era+1, targetEra, poolInfo.EraSnapshot.Bond, poolInfo.EraSnapshot.Unbond, poolInfo.EraSnapshot.Active, poolInfo.Bond, poolInfo.Unbond, poolInfo.Active)
-		msg = getEraActiveMsg(poolAddr)
+		if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.BondHeight) {
+			logger.Warnln("delegation icq query not ready")
+			return nil
+		}
+		txHash, err = t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraActiveMsg(poolAddr), nil)
+		logger.WithFields(logrus.Fields{
+			"current status":  poolInfo.EraProcessStatus,
+			"current era":     poolInfo.Era,
+			"current rate":    poolInfo.Rate,
+			"snapshot bond":   poolInfo.EraSnapshot.Bond,
+			"snapshot unbond": poolInfo.EraSnapshot.Unbond,
+			"snapshot active": poolInfo.EraSnapshot.Active,
+			"bond":            poolInfo.Active,
+			"unbond":          poolInfo.Active,
+			"active":          poolInfo.Active,
+			"tx hash":         txHash,
+		}).Infoln("start era-active")
 	default:
-		logrus.Infof("pool-%s era status %s \n skip", poolAddr, poolInfo.EraProcessStatus)
+		return nil
 	}
 
-	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, msg, nil)
 	if err != nil {
-		logrus.Warnf("pool-%s execute %s :failed, err: %s \n", poolAddr, StatusForExecute[poolInfo.EraProcessStatus], err.Error())
+		logger.Warnf("failed, err: %s \n", err.Error())
 		return err
 	}
 
 	if poolInfo.EraProcessStatus == RestakeEnded {
-		time.Sleep(10 * time.Second)
-		poolNewInfo, err := t.getQueryPoolInfoRes(poolAddr)
-		if err != nil {
-			return err
+		retry := 0
+		for {
+			retry++
+			if retry > 10 {
+				return nil
+			}
+			time.Sleep(10 * time.Second)
+			poolNewInfo, _ := t.getQueryPoolInfoRes(poolAddr)
+			if poolNewInfo.EraProcessStatus == ActiveEnded {
+				logger.WithFields(logrus.Fields{
+					"new rate": poolNewInfo.Rate,
+				}).
+					Infof("new era task has complete")
+				break
+			}
 		}
-		if poolNewInfo.EraProcessStatus == ActiveEnded {
-			logrus.Infof("pool-%s era update complete: tx: %s new era: %d target era: %d new rate: %s\n", poolAddr, txHash, poolNewInfo.Era, targetEra, poolNewInfo.Rate)
-		}
-	} else {
-		logrus.Infof("pool-%s execute %s: tx: %s send success \n", poolAddr, StatusForExecute[poolInfo.EraProcessStatus], txHash)
 	}
 
 	return nil

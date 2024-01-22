@@ -2,6 +2,7 @@ package task
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // EraProcessStatus
@@ -15,6 +16,13 @@ const (
 	RestakeStarted   = "restake_started"
 	RestakeEnded     = "restake_ended"
 	ActiveEnded      = "active_ended"
+)
+
+// QueryKind
+const (
+	BalancesQueryKind    = "balances"
+	DelegationsQueryKind = "delegations"
+	ValidatorsQueryKind  = "validators"
 )
 
 var StatusForExecute = map[string]string{
@@ -38,15 +46,7 @@ type QueryPoolInfoReq struct {
 	PoolInfo PoolAddr `json:"pool_info"`
 }
 
-func getQueryPoolInfoReq(poolAddr string) []byte {
-	poolReq := QueryPoolInfoReq{
-		PoolInfo: PoolAddr{
-			Addr: poolAddr,
-		},
-	}
-	marshal, _ := json.Marshal(poolReq)
-	return marshal
-}
+type StackInfoReq struct{}
 
 type QueryPoolInfoRes struct {
 	IcaId                     string      `json:"ica_id"`
@@ -67,6 +67,36 @@ type QueryPoolInfoRes struct {
 	LsmSupport                bool        `json:"lsm_support"`
 }
 
+type RegisterQueryInfoRes struct {
+	RegisteredQuery struct {
+		Id    int    `json:"id"`
+		Owner string `json:"owner"`
+		Keys  []struct {
+			Path string `json:"path"`
+			Key  string `json:"key"`
+		} `json:"keys"`
+		QueryType                       string `json:"query_type"`
+		TransactionsFilter              string `json:"transactions_filter"`
+		ConnectionId                    string `json:"connection_id"`
+		UpdatePeriod                    uint64 `json:"update_period"`
+		LastSubmittedResultLocalHeight  uint64 `json:"last_submitted_result_local_height"`
+		LastSubmittedResultRemoteHeight struct {
+			RevisionNumber int `json:"revision_number"`
+			RevisionHeight int `json:"revision_height"`
+		} `json:"last_submitted_result_remote_height"`
+		Deposit []struct {
+			Denom  string `json:"denom"`
+			Amount string `json:"amount"`
+		} `json:"deposit"`
+		SubmitTimeout      int `json:"submit_timeout"`
+		RegisteredAtHeight int `json:"registered_at_height"`
+	} `json:"registered_query"`
+}
+
+type ICAData struct {
+	IcaAddr string `json:"ica_addr"`
+}
+
 type StackInfoRes struct {
 	Pools []string `json:"pools"`
 }
@@ -83,6 +113,26 @@ type eraSnapshot struct {
 type Coin struct {
 	Denom  string `json:"denom"`
 	Amount string `json:"amount"`
+}
+
+type RedeemTokenForShareMsg struct {
+	PoolAddr string `json:"pool_addr"`
+	Tokens   []Coin `json:"tokens"`
+}
+
+type UpdateIcqUpdatePeriodMsg struct {
+	Addr            string `json:"pool_addr"`
+	NewUpdatePeriod uint64 `json:"new_update_period"`
+}
+
+func getQueryPoolInfoReq(poolAddr string) []byte {
+	poolReq := QueryPoolInfoReq{
+		PoolInfo: PoolAddr{
+			Addr: poolAddr,
+		},
+	}
+	marshal, _ := json.Marshal(poolReq)
+	return marshal
 }
 
 func getEraUpdateMsg(poolAddr string) []byte {
@@ -145,11 +195,6 @@ func getPoolUpdateQueryExecuteMsg(poolAddr string) []byte {
 	return marshal
 }
 
-type RedeemTokenForShareMsg struct {
-	PoolAddr string `json:"pool_addr"`
-	Tokens   []Coin `json:"tokens"`
-}
-
 func getRedeemTokenForShareMsg(poolAddr string, tokens []Coin) []byte {
 	msg := struct {
 		RedeemTokenForShareMsg `json:"redeem_token_for_share"`
@@ -176,7 +221,30 @@ func (t *Task) getQueryPoolInfoRes(poolAddr string) (*QueryPoolInfoRes, error) {
 	return &res, nil
 }
 
-type StackInfoReq struct{}
+func (t *Task) getRegisteredIcqQuery(icaAddr, queryKind string) (*RegisterQueryInfoRes, error) {
+	msg := fmt.Sprintf("{\"get_ica_registered_query\":{\"ica_addr\":\"%s\",\"query_kind\":\"%s\"}}", icaAddr, queryKind)
+	rawRes, err := t.neutronClient.QuerySmartContractState(t.stakeManager, []byte(msg))
+	if err != nil {
+		return nil, err
+	}
+	var res RegisterQueryInfoRes
+	err = json.Unmarshal(rawRes.Data.Bytes(), &res)
+	if err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (t *Task) getPoolIcaInfo(icaId string) ([]ICAData, error) {
+	msg := fmt.Sprintf("{\"interchain_account_address_from_contract\":{\"interchain_account_id\":\"%s\"}}", icaId)
+	rawRes, err := t.neutronClient.QuerySmartContractState(t.stakeManager, []byte(msg))
+	if err != nil {
+		return nil, err
+	}
+	var res []ICAData
+	_ = json.Unmarshal(rawRes.Data.Bytes(), &res)
+	return res, nil
+}
 
 func (t *Task) getStackInfoRes() (*StackInfoRes, error) {
 	msg := struct {
@@ -196,11 +264,6 @@ func (t *Task) getStackInfoRes() (*StackInfoRes, error) {
 		return nil, err
 	}
 	return &res, nil
-}
-
-type UpdateIcqUpdatePeriodMsg struct {
-	Addr            string `json:"pool_addr"`
-	NewUpdatePeriod uint64 `json:"new_update_period"`
 }
 
 func getEraUpdatePeriodMsg(poolAddr string, period uint64) []byte {
