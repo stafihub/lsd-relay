@@ -133,8 +133,8 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 			"snapshot bond":   poolInfo.EraSnapshot.Bond,
 			"snapshot unbond": poolInfo.EraSnapshot.Unbond,
 			"snapshot active": poolInfo.EraSnapshot.Active,
-			"bond":            poolInfo.Active,
-			"unbond":          poolInfo.Active,
+			"bond":            poolInfo.Bond,
+			"unbond":          poolInfo.Unbond,
 			"active":          poolInfo.Active,
 			"tx hash":         txHash,
 		}).Infoln("start era-active")
