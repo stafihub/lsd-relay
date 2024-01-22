@@ -1,7 +1,7 @@
 endpointList = ["http://127.0.0.1:26657"]
 logFilePath = ""
 gasPrice="0.005untrn"
-taskTicker = 30  # seconds
+taskTicker = 60  # seconds
 keystorePath = ""
 poolAddr=""
 stakeManager=""
