@@ -130,7 +130,6 @@ func (t *Task) processPoolNewEra(poolAddr string) error {
 		txHash, err = t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraActiveMsg(poolAddr), nil)
 		logger.WithFields(logrus.Fields{
 			"current status":  poolInfo.EraProcessStatus,
-			"current era":     poolInfo.Era,
 			"current rate":    poolInfo.Rate,
 			"snapshot bond":   poolInfo.EraSnapshot.Bond,
 			"snapshot unbond": poolInfo.EraSnapshot.Unbond,
