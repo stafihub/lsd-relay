@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// EraProcessStatus
+// Status
 const (
 	EraUpdateStarted = "era_update_started"
 	EraUpdateEnded   = "era_update_ended"
@@ -58,7 +58,7 @@ type QueryPoolInfoRes struct {
 	Active                    string      `json:"active"`
 	Rate                      string      `json:"rate"`
 	RateChangeLimit           string      `json:"rate_change_limit"`
-	EraProcessStatus          string      `json:"era_process_status"`
+	Status                    string      `json:"status"`
 	ValidatorUpdateStatus     string      `json:"validator_update_status"`
 	ShareTokens               []Coin      `json:"share_tokens"`
 	RedeemmingShareTokenDenom []string    `json:"redeemming_share_token_denom"`
@@ -102,12 +102,12 @@ type StackInfoRes struct {
 }
 
 type eraSnapshot struct {
-	Era           uint64 `json:"era"`
-	Bond          string `json:"bond"`
-	Unbond        string `json:"unbond"`
-	Active        string `json:"active"`
-	RestakeAmount string `json:"restake_amount"`
-	BondHeight    uint64 `json:"bond_height"`
+	Era            uint64 `json:"era"`
+	Bond           string `json:"bond"`
+	Unbond         string `json:"unbond"`
+	Active         string `json:"active"`
+	RestakeAmount  string `json:"restake_amount"`
+	LastStepHeight uint64 `json:"last_step_height"`
 }
 
 type Coin struct {

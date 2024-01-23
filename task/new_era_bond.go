@@ -37,7 +37,7 @@ func (t *Task) processPoolNewEraBond(poolAddr string) error {
 		return err
 	}
 
-	if poolInfo.EraProcessStatus != EraUpdateEnded {
+	if poolInfo.Status != EraUpdateEnded {
 		return nil
 	}
 
@@ -57,8 +57,8 @@ func (t *Task) processPoolNewEraBond(poolAddr string) error {
 		return errors.New("ica data query failed")
 	}
 
-	if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.BondHeight) {
-		logger.Warnln("delegation icq query not ready")
+	if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.LastStepHeight) {
+		logger.Warnln("delegation interchain query not ready")
 		return nil
 	}
 

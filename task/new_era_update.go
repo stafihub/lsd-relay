@@ -37,7 +37,7 @@ func (t *Task) processPoolNewEraUpdate(poolAddr string) error {
 		return err
 	}
 
-	if poolInfo.EraProcessStatus != ActiveEnded {
+	if poolInfo.Status != ActiveEnded {
 		return nil
 	}
 

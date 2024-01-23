@@ -39,7 +39,7 @@ func (t *Task) processPoolNewEraRebond(poolAddr string) error {
 		return err
 	}
 
-	if poolInfo.EraProcessStatus != WithdrawEnded {
+	if poolInfo.Status != WithdrawEnded {
 		return nil
 	}
 
@@ -56,8 +56,8 @@ func (t *Task) processPoolNewEraRebond(poolAddr string) error {
 		"action": newEraRebondFuncName,
 	})
 
-	if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.BondHeight) {
-		logger.Warnln("delegation icq query not ready")
+	if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.LastStepHeight) {
+		logger.Warnln("delegation interchain query not ready")
 		return nil
 	}
 

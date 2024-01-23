@@ -26,7 +26,7 @@ func (t *Task) processPoolIcqUpdate(poolAddr string) error {
 	if err != nil {
 		return err
 	}
-	if poolInfo.EraProcessStatus != WaitQueryUpdate {
+	if poolInfo.Status != WaitQueryUpdate {
 		return nil
 	}
 	logger := logrus.WithFields(logrus.Fields{

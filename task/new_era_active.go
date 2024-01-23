@@ -39,7 +39,7 @@ func (t *Task) processPoolNewEraActive(poolAddr string) error {
 		return err
 	}
 
-	if poolInfo.EraProcessStatus != RebondEnded {
+	if poolInfo.Status != RebondEnded {
 		return nil
 	}
 
@@ -56,8 +56,8 @@ func (t *Task) processPoolNewEraActive(poolAddr string) error {
 		"action":  eraActiveFuncName,
 	})
 
-	if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.BondHeight) {
-		logger.Warnln("delegation icq query not ready")
+	if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.LastStepHeight) {
+		logger.Warnln("delegation interchain query not ready")
 		return nil
 	}
 	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraActiveMsg(poolAddr), nil)
@@ -76,7 +76,7 @@ func (t *Task) processPoolNewEraActive(poolAddr string) error {
 			break
 		}
 		poolNewInfo, _ := t.getQueryPoolInfoRes(poolAddr)
-		if poolNewInfo.EraProcessStatus == ActiveEnded {
+		if poolNewInfo.Status == ActiveEnded {
 			logger.WithFields(logrus.Fields{
 				"active":  poolNewInfo.Active,
 				"newRate": poolNewInfo.Rate,

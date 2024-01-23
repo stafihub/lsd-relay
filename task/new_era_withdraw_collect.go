@@ -39,7 +39,7 @@ func (t *Task) processPoolNewEraWithdrawCollect(poolAddr string) error {
 		return err
 	}
 
-	if poolInfo.EraProcessStatus != BondEnded {
+	if poolInfo.Status != BondEnded {
 		return nil
 	}
 
@@ -56,8 +56,8 @@ func (t *Task) processPoolNewEraWithdrawCollect(poolAddr string) error {
 		"action": newEraWithdrawCollectFuncName,
 	})
 
-	if !t.checkIcqSubmitHeight(poolIca[1].IcaAddr, BalancesQueryKind, poolInfo.EraSnapshot.BondHeight) {
-		logger.Warnln("withdraw address balance icq query not ready")
+	if !t.checkIcqSubmitHeight(poolIca[1].IcaAddr, BalancesQueryKind, poolInfo.EraSnapshot.LastStepHeight) {
+		logger.Warnln("withdraw address balance interchain query not ready")
 		return nil
 	}
 
