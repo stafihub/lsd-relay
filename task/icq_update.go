@@ -2,6 +2,8 @@ package task
 
 import "github.com/sirupsen/logrus"
 
+var icqUpdateFuncName = "ExecuteValidatorsIcqUpdate"
+
 func (t *Task) handleIcqUpdate() error {
 	if t.runForEntrustedPool {
 		stackInfo, err := t.getStackInfoRes()
@@ -27,12 +29,33 @@ func (t *Task) processPoolIcqUpdate(poolAddr string) error {
 	if poolInfo.EraProcessStatus != WaitQueryUpdate {
 		return nil
 	}
+	logger := logrus.WithFields(logrus.Fields{
+		"pool":   poolAddr,
+		"action": icqUpdateFuncName,
+	})
 
 	msg := getPoolUpdateQueryExecuteMsg(poolAddr)
 	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, msg, nil)
 	if err != nil {
+		logger.Warnf("failed, err: %s \n", err.Error())
 		return err
 	}
-	logrus.Infof("pool %s delegations icq register tx %s send success \n", poolAddr, txHash)
+
+	logger.WithFields(logrus.Fields{
+		"tx hash": txHash,
+	}).Infoln("success")
+
 	return nil
+}
+
+func (t *Task) checkIcqSubmitHeight(icaAddr, queryKind string, lastStepHeight uint64) bool {
+	query, err := t.getRegisteredIcqQuery(icaAddr, queryKind)
+	if err != nil {
+		return false
+	}
+	if query.RegisteredQuery.LastSubmittedResultLocalHeight <= lastStepHeight {
+		return false
+	}
+
+	return true
 }

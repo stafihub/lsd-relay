@@ -5,6 +5,8 @@ import (
 	"github.com/stafihub/lsd-relay/pkg/utils"
 )
 
+var redeemSharesFuncName = "ExecuteRedeemShares"
+
 func (t *Task) handleRedeemShares() error {
 	if t.runForEntrustedPool {
 		stackInfo, err := t.getStackInfoRes()
@@ -39,12 +41,21 @@ func (t *Task) processPoolRedeemShares(poolAddr string) error {
 			}
 			coins = append(coins, shareToken)
 		}
+		logger := logrus.WithFields(logrus.Fields{
+			"pool":   poolAddr,
+			"action": redeemSharesFuncName,
+		})
 		msg := getRedeemTokenForShareMsg(t.poolAddr, coins)
+
 		txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, msg, nil)
 		if err != nil {
+			logger.Warnf("failed, err: %s \n", err.Error())
 			return err
 		}
-		logrus.Infof("pool %s redeem tx %s send success \n", poolAddr, txHash)
+
+		logger.WithFields(logrus.Fields{
+			"tx hash": txHash,
+		}).Infoln("success")
 	}
 	return nil
 }

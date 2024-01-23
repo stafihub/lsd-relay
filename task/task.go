@@ -22,6 +22,12 @@ type Task struct {
 	runForEntrustedPool bool
 	poolAddr            string
 	stakeManager        string
+	handlers            []Handler
+}
+
+type Handler struct {
+	method func() error
+	name   string
 }
 
 func NewTask(cfg *config.Config) (*Task, error) {
@@ -31,7 +37,7 @@ func NewTask(cfg *config.Config) (*Task, error) {
 	if cfg.PoolAddr == "" && !cfg.RunForEntrustedPool {
 		return nil, errors.New("pool addr is empty")
 	}
-	s := &Task{
+	t := &Task{
 		taskTicker:          cfg.TaskTicker,
 		stop:                make(chan struct{}),
 		poolAddr:            cfg.PoolAddr,
@@ -48,15 +54,42 @@ func NewTask(cfg *config.Config) (*Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.neutronClient = c
+	t.neutronClient = c
 
-	return s, nil
+	t.handlers = append(t.handlers, Handler{
+		method: t.handleNewEraUpdate,
+		name:   newEraUpdateFuncName,
+	})
+	t.handlers = append(t.handlers, Handler{
+		method: t.handleNewEraBond,
+		name:   newEraBondFuncName,
+	})
+	t.handlers = append(t.handlers, Handler{
+		method: t.handleNewEraWithdrawCollect,
+		name:   newEraWithdrawCollectFuncName,
+	})
+	t.handlers = append(t.handlers, Handler{
+		method: t.handleNewEraRebond,
+		name:   newEraRebondFuncName,
+	})
+	t.handlers = append(t.handlers, Handler{
+		method: t.handleNewEraActive,
+		name:   eraActiveFuncName,
+	})
+	t.handlers = append(t.handlers, Handler{
+		method: t.handleIcqUpdate,
+		name:   icqUpdateFuncName,
+	})
+	t.handlers = append(t.handlers, Handler{
+		method: t.handleRedeemShares,
+		name:   redeemSharesFuncName,
+	})
+
+	return t, nil
 }
 
 func (t *Task) Start() error {
-	utils.SafeGoWithRestart(t.newEraHandler)
-	utils.SafeGoWithRestart(t.redeemTokenHandler)
-	utils.SafeGoWithRestart(t.icqUpdateHandle)
+	utils.SafeGoWithRestart(t.handler)
 	return nil
 }
 
@@ -64,86 +97,31 @@ func (t *Task) Stop() {
 	close(t.stop)
 }
 
-func (t *Task) newEraHandler() {
-	logrus.Info("start new era Handler")
-	logrus.Debug("----------- newEraHandler start -----------")
+func (t *Task) handler() {
+	logrus.Info("start handlers")
 
-	err := t.handleNewEra()
-	if err != nil {
-		logrus.Warnf("newEraHandler failed, err: %s", err.Error())
-	}
-
-	ticker := time.NewTicker(time.Duration(t.taskTicker) * time.Second)
-	defer ticker.Stop()
-
+Out:
 	for {
 		select {
 		case <-t.stop:
-			logrus.Info("new era task has stopped")
+			logrus.Info("task has stopped")
 			return
-		case <-ticker.C:
-			err := t.handleNewEra()
-			if err != nil {
-				logrus.Warnf("newEraHandler failed, err: %s", err.Error())
-				continue
+		default:
+
+			for _, handler := range t.handlers {
+				funcName := handler.name
+				logrus.Debugf("handler %s start...", funcName)
+
+				err := handler.method()
+				if err != nil {
+					logrus.Warnf("handler %s failed: %s, will retry.", funcName, err)
+					time.Sleep(time.Second * 6)
+					continue Out
+				}
+				logrus.Debugf("handler %s end", funcName)
 			}
-			logrus.Debug("----------- newEraHandler end -----------")
 		}
-	}
-}
 
-func (t *Task) redeemTokenHandler() {
-	logrus.Info("start redeem token Handler")
-	logrus.Debug("----------- redeemTokenHandler start -----------")
-
-	err := t.handleRedeemShares()
-	if err != nil {
-		logrus.Warnf("redeemTokenHandler failed, err: %s", err.Error())
-	}
-
-	ticker := time.NewTicker(time.Duration(t.taskTicker) * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-t.stop:
-			logrus.Info("redeem token task has stopped")
-			return
-		case <-ticker.C:
-			err := t.handleRedeemShares()
-			if err != nil {
-				logrus.Warnf("redeemTokenHandler failed, err: %s", err.Error())
-				continue
-			}
-			logrus.Debug("----------- redeemTokenHandler end -----------")
-		}
-	}
-}
-
-func (t *Task) icqUpdateHandle() {
-	logrus.Info("start icq register Handler")
-	logrus.Debug("----------- icqUpdateHandle start -----------")
-
-	err := t.handleIcqUpdate()
-	if err != nil {
-		logrus.Warnf("icqUpdateHandle failed, err: %s", err.Error())
-	}
-
-	ticker := time.NewTicker(time.Duration(t.taskTicker) * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-t.stop:
-			logrus.Info("icq register task has stopped")
-			return
-		case <-ticker.C:
-			err := t.handleIcqUpdate()
-			if err != nil {
-				logrus.Warnf("icqUpdateHandle failed, err: %s", err.Error())
-				continue
-			}
-			logrus.Debug("----------- icqUpdateHandle end -----------")
-		}
+		time.Sleep(time.Duration(t.taskTicker) * time.Second)
 	}
 }
