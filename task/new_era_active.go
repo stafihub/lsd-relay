@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/sirupsen/logrus"
 	"sync"
+	"time"
 )
 
 var eraActiveFuncName = "NewEraActive"
@@ -84,6 +85,7 @@ func (t *Task) processPoolNewEraActive(poolAddr string) error {
 				Infof("success(the new era task has been completed)")
 			break
 		}
+		time.Sleep(3 * time.Second)
 	}
 
 	return nil
