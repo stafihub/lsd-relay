@@ -265,16 +265,3 @@ func (t *Task) getStackInfoRes() (*StackInfoRes, error) {
 	}
 	return &res, nil
 }
-
-func getEraUpdatePeriodMsg(poolAddr string, period uint64) []byte {
-	msg := struct {
-		UpdateIcqUpdatePeriodMsg `json:"update_icq_update_period"`
-	}{
-		UpdateIcqUpdatePeriodMsg: UpdateIcqUpdatePeriodMsg{
-			Addr:            poolAddr,
-			NewUpdatePeriod: period,
-		},
-	}
-	marshal, _ := json.Marshal(msg)
-	return marshal
-}

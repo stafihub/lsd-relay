@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/sirupsen/logrus"
 	"sync"
-	"time"
 )
 
 var eraActiveFuncName = "NewEraActive"
@@ -53,7 +52,6 @@ func (t *Task) processPoolNewEraActive(poolAddr string) error {
 	logger := logrus.WithFields(logrus.Fields{
 		"pool":    poolAddr,
 		"oldRate": poolInfo.Rate,
-		"active":  poolInfo.Active,
 		"action":  eraActiveFuncName,
 	})
 
@@ -79,13 +77,13 @@ func (t *Task) processPoolNewEraActive(poolAddr string) error {
 		poolNewInfo, _ := t.getQueryPoolInfoRes(poolAddr)
 		if poolNewInfo.EraProcessStatus == ActiveEnded {
 			logger.WithFields(logrus.Fields{
+				"active":  poolNewInfo.Active,
 				"newRate": poolNewInfo.Rate,
 				"txHash":  txHash,
 			}).
 				Infof("success(the new era task has been completed)")
 			break
 		}
-		time.Sleep(10 * time.Second)
 	}
 
 	return nil
