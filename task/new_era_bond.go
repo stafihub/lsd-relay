@@ -32,11 +32,6 @@ func (t *Task) handleNewEraBond() error {
 }
 
 func (t *Task) processPoolNewEraBond(poolAddr string) error {
-	var err error
-	_, timestamp, err := t.neutronClient.GetCurrentBLockAndTimestamp()
-	if err != nil {
-		return err
-	}
 	poolInfo, err := t.getQueryPoolInfoRes(poolAddr)
 	if err != nil {
 		return err
@@ -46,18 +41,12 @@ func (t *Task) processPoolNewEraBond(poolAddr string) error {
 		return nil
 	}
 
-	targetEra := uint64(timestamp)/poolInfo.EraSeconds + poolInfo.Offset
-
 	logger := logrus.WithFields(logrus.Fields{
-		"pool":            poolAddr,
-		"target era":      targetEra,
-		"old era":         poolInfo.Era - 1,
-		"new era":         poolInfo.Era,
-		"current status":  poolInfo.EraProcessStatus,
-		"current rate":    poolInfo.Rate,
-		"snapshot bond":   poolInfo.EraSnapshot.Bond,
-		"snapshot unbond": poolInfo.EraSnapshot.Unbond,
-		"action":          newEraBondFuncName,
+		"pool":           poolAddr,
+		"snapshotBond":   poolInfo.EraSnapshot.Bond,
+		"snapshotUnbond": poolInfo.EraSnapshot.Unbond,
+		"snapshotActive": poolInfo.EraSnapshot.Active,
+		"action":         newEraBondFuncName,
 	})
 
 	poolIca, err := t.getPoolIcaInfo(poolInfo.IcaId)
@@ -80,7 +69,7 @@ func (t *Task) processPoolNewEraBond(poolAddr string) error {
 	}
 
 	logger.WithFields(logrus.Fields{
-		"tx hash": txHash,
+		"txHash": txHash,
 	}).Infoln("success")
 
 	return nil

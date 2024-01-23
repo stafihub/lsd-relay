@@ -53,13 +53,10 @@ func (t *Task) processPoolNewEraUpdate(poolAddr string) error {
 	}
 
 	logger := logrus.WithFields(logrus.Fields{
-		"pool":           poolAddr,
-		"target era":     targetEra,
-		"old era":        poolInfo.Era,
-		"new era":        poolInfo.Era + 1,
-		"current status": poolInfo.EraProcessStatus,
-		"current rate":   poolInfo.Rate,
-		"action":         newEraUpdateFuncName,
+		"pool":      poolAddr,
+		"targetEra": targetEra,
+		"newEra":    poolInfo.Era + 1,
+		"action":    newEraUpdateFuncName,
 	})
 
 	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraUpdateMsg(poolAddr), nil)
@@ -69,7 +66,7 @@ func (t *Task) processPoolNewEraUpdate(poolAddr string) error {
 	}
 
 	logger.WithFields(logrus.Fields{
-		"tx hash": txHash,
+		"txHash": txHash,
 	}).Infoln("success")
 
 	return nil

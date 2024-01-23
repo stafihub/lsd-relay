@@ -43,12 +43,6 @@ func (t *Task) processPoolNewEraRebond(poolAddr string) error {
 		return nil
 	}
 
-	_, timestamp, err := t.neutronClient.GetCurrentBLockAndTimestamp()
-	if err != nil {
-		return err
-	}
-	targetEra := uint64(timestamp)/poolInfo.EraSeconds + poolInfo.Offset
-
 	poolIca, err := t.getPoolIcaInfo(poolInfo.IcaId)
 	if err != nil {
 		return err
@@ -58,13 +52,8 @@ func (t *Task) processPoolNewEraRebond(poolAddr string) error {
 	}
 
 	logger := logrus.WithFields(logrus.Fields{
-		"pool":           poolAddr,
-		"target era":     targetEra,
-		"old era":        poolInfo.Era - 1,
-		"new era":        poolInfo.Era,
-		"current status": poolInfo.EraProcessStatus,
-		"current rate":   poolInfo.Rate,
-		"action":         newEraRebondFuncName,
+		"pool":   poolAddr,
+		"action": newEraRebondFuncName,
 	})
 
 	if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.BondHeight) {
@@ -72,14 +61,14 @@ func (t *Task) processPoolNewEraRebond(poolAddr string) error {
 		return nil
 	}
 
-	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraRestakeMsg(poolAddr), nil)
+	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraRebondMsg(poolAddr), nil)
 	if err != nil {
 		logger.Warnf("failed, err: %s \n", err.Error())
 		return err
 	}
 
 	logger.WithFields(logrus.Fields{
-		"tx hash": txHash,
+		"txHash": txHash,
 	}).Infoln("success")
 
 	return nil

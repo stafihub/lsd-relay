@@ -43,12 +43,6 @@ func (t *Task) processPoolNewEraWithdrawCollect(poolAddr string) error {
 		return nil
 	}
 
-	_, timestamp, err := t.neutronClient.GetCurrentBLockAndTimestamp()
-	if err != nil {
-		return err
-	}
-	targetEra := uint64(timestamp)/poolInfo.EraSeconds + poolInfo.Offset
-
 	poolIca, err := t.getPoolIcaInfo(poolInfo.IcaId)
 	if err != nil {
 		return err
@@ -58,13 +52,8 @@ func (t *Task) processPoolNewEraWithdrawCollect(poolAddr string) error {
 	}
 
 	logger := logrus.WithFields(logrus.Fields{
-		"pool":           poolAddr,
-		"target era":     targetEra,
-		"old era":        poolInfo.Era - 1,
-		"new era":        poolInfo.Era,
-		"current status": poolInfo.EraProcessStatus,
-		"current rate":   poolInfo.Rate,
-		"action":         newEraWithdrawCollectFuncName,
+		"pool":   poolAddr,
+		"action": newEraWithdrawCollectFuncName,
 	})
 
 	if !t.checkIcqSubmitHeight(poolIca[1].IcaAddr, BalancesQueryKind, poolInfo.EraSnapshot.BondHeight) {
@@ -78,7 +67,7 @@ func (t *Task) processPoolNewEraWithdrawCollect(poolAddr string) error {
 		return err
 	}
 	logger.WithFields(logrus.Fields{
-		"tx hash": txHash,
+		"txHash": txHash,
 	}).Infoln("success")
 
 	return nil

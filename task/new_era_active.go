@@ -39,15 +39,9 @@ func (t *Task) processPoolNewEraActive(poolAddr string) error {
 		return err
 	}
 
-	if poolInfo.EraProcessStatus != RestakeEnded {
+	if poolInfo.EraProcessStatus != RebondEnded {
 		return nil
 	}
-
-	_, timestamp, err := t.neutronClient.GetCurrentBLockAndTimestamp()
-	if err != nil {
-		return err
-	}
-	targetEra := uint64(timestamp)/poolInfo.EraSeconds + poolInfo.Offset
 
 	poolIca, err := t.getPoolIcaInfo(poolInfo.IcaId)
 	if err != nil {
@@ -57,17 +51,10 @@ func (t *Task) processPoolNewEraActive(poolAddr string) error {
 		return errors.New("ica data query failed")
 	}
 	logger := logrus.WithFields(logrus.Fields{
-		"pool":            poolAddr,
-		"target era":      targetEra,
-		"old era":         poolInfo.Era - 1,
-		"new era":         poolInfo.Era,
-		"snapshot bond":   poolInfo.EraSnapshot.Bond,
-		"snapshot unbond": poolInfo.EraSnapshot.Unbond,
-		"snapshot active": poolInfo.EraSnapshot.Active,
-		"bond":            poolInfo.Bond,
-		"unbond":          poolInfo.Unbond,
-		"active":          poolInfo.Active,
-		"action":          eraActiveFuncName,
+		"pool":    poolAddr,
+		"oldRate": poolInfo.Rate,
+		"active":  poolInfo.Active,
+		"action":  eraActiveFuncName,
 	})
 
 	if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.BondHeight) {
@@ -85,15 +72,15 @@ func (t *Task) processPoolNewEraActive(poolAddr string) error {
 		retry++
 		if retry > 30 {
 			logger.WithFields(logrus.Fields{
-				"tx hash": txHash,
+				"txHash": txHash,
 			}).Warnln("tx success but result check been timeout")
 			break
 		}
 		poolNewInfo, _ := t.getQueryPoolInfoRes(poolAddr)
 		if poolNewInfo.EraProcessStatus == ActiveEnded {
 			logger.WithFields(logrus.Fields{
-				"new rate": poolNewInfo.Rate,
-				"tx hash":  txHash,
+				"newRate": poolNewInfo.Rate,
+				"txHash":  txHash,
 			}).
 				Infof("success(the new era task has been completed)")
 			break

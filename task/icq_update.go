@@ -42,7 +42,7 @@ func (t *Task) processPoolIcqUpdate(poolAddr string) error {
 	}
 
 	logger.WithFields(logrus.Fields{
-		"tx hash": txHash,
+		"txHash": txHash,
 	}).Infoln("success")
 
 	return nil

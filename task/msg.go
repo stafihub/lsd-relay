@@ -13,8 +13,8 @@ const (
 	BondEnded        = "bond_ended"
 	WithdrawStarted  = "withdraw_started"
 	WithdrawEnded    = "withdraw_ended"
-	RestakeStarted   = "restake_started"
-	RestakeEnded     = "restake_ended"
+	RebondStarted    = "rebond_started"
+	RebondEnded      = "rebond_ended"
 	ActiveEnded      = "active_ended"
 )
 
@@ -29,8 +29,8 @@ var StatusForExecute = map[string]string{
 	ActiveEnded:    "era_update",
 	EraUpdateEnded: "era_bond",
 	BondEnded:      "era_withdraw_collect",
-	WithdrawEnded:  "era_restake",
-	RestakeEnded:   "era_active",
+	WithdrawEnded:  "era_rebond",
+	RebondEnded:    "era_active",
 }
 
 // ValidatorUpdateStatus
@@ -165,13 +165,13 @@ func getEraCollectWithdrawMsg(poolAddr string) []byte {
 	return marshal
 }
 
-func getEraRestakeMsg(poolAddr string) []byte {
-	eraRestakeMsg := struct {
-		PoolAddr `json:"era_restake"`
+func getEraRebondMsg(poolAddr string) []byte {
+	msg := struct {
+		PoolAddr `json:"era_rebond"`
 	}{
 		PoolAddr: PoolAddr{Addr: poolAddr},
 	}
-	marshal, _ := json.Marshal(eraRestakeMsg)
+	marshal, _ := json.Marshal(msg)
 	return marshal
 }
 
