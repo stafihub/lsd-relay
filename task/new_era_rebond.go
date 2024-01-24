@@ -52,8 +52,9 @@ func (t *Task) processPoolNewEraRebond(poolAddr string) error {
 	}
 
 	logger := logrus.WithFields(logrus.Fields{
-		"pool":   poolAddr,
-		"action": newEraRebondFuncName,
+		"pool":         poolAddr,
+		"rebondAmount": poolInfo.EraSnapshot.RestakeAmount,
+		"action":       newEraRebondFuncName,
 	})
 
 	if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.LastStepHeight) {
