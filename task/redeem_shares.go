@@ -45,7 +45,7 @@ func (t *Task) processPoolRedeemShares(poolAddr string) error {
 			"pool":   poolAddr,
 			"action": redeemSharesFuncName,
 		})
-		msg := getRedeemTokenForShareMsg(t.poolAddr, coins)
+		msg := getRedeemTokenForShareMsg(poolAddr, coins)
 
 		txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, msg, nil)
 		if err != nil {
