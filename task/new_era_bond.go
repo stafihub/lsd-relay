@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -61,8 +62,12 @@ func (t *Task) processPoolNewEraBond(poolAddr string) error {
 		logger.Warnln("delegation interchain query not ready")
 		return nil
 	}
-
-	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraBondMsg(poolAddr), nil)
+	ibcFee, err := t.neutronClient.GetTotalIbcFee()
+	if err != nil {
+		return err
+	}
+	ibcFeeCoins := types.NewCoins(types.NewCoin(t.neutronClient.GetDenom(), ibcFee))
+	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraBondMsg(poolAddr), ibcFeeCoins)
 	if err != nil {
 		logger.Warnf("failed, err: %s \n", err.Error())
 		return err

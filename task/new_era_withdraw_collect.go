@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -61,7 +62,13 @@ func (t *Task) processPoolNewEraWithdrawCollect(poolAddr string) error {
 		return nil
 	}
 
-	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraCollectWithdrawMsg(poolAddr), nil)
+	ibcFee, err := t.neutronClient.GetTotalIbcFee()
+	if err != nil {
+		return err
+	}
+	ibcFeeCoins := types.NewCoins(types.NewCoin(t.neutronClient.GetDenom(), ibcFee))
+
+	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraCollectWithdrawMsg(poolAddr), ibcFeeCoins)
 	if err != nil {
 		logger.Warnf("failed, err: %s \n", err.Error())
 		return err

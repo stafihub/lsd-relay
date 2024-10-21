@@ -3,6 +3,7 @@ package task
 import (
 	"sync"
 
+	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -59,7 +60,13 @@ func (t *Task) processPoolNewEraUpdate(poolAddr string) error {
 		"action":    newEraUpdateFuncName,
 	})
 
-	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraUpdateMsg(poolAddr), nil)
+	ibcFee, err := t.neutronClient.GetTotalIbcFee()
+	if err != nil {
+		return err
+	}
+	ibcFeeCoins := types.NewCoins(types.NewCoin(t.neutronClient.GetDenom(), ibcFee))
+
+	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraUpdateMsg(poolAddr), ibcFeeCoins)
 	if err != nil {
 		logger.Warnf("failed, err: %s \n", err.Error())
 		return nil
