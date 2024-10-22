@@ -1,7 +1,6 @@
 package task
 
 import (
-	"errors"
 	"sync"
 
 	"github.com/cosmos/cosmos-sdk/types"
@@ -49,14 +48,6 @@ func (t *Task) processPoolNewEraBond(poolAddr string) error {
 		"snapshotActive": poolInfo.EraSnapshot.Active,
 		"action":         newEraBondFuncName,
 	})
-
-	poolIca, err := t.getPoolIcaInfo(poolInfo.IcaId)
-	if err != nil {
-		return err
-	}
-	if len(poolIca) < 2 {
-		return errors.New("ica data query failed")
-	}
 
 	if !t.checkIcqSubmitHeight(poolAddr, DelegationsQueryKind, poolInfo.EraSnapshot.LastStepHeight) {
 		logger.Warnln("delegation interchain query not ready")

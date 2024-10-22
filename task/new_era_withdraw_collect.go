@@ -1,11 +1,9 @@
 package task
 
 import (
-	"errors"
-	"sync"
-
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/sirupsen/logrus"
+	"sync"
 )
 
 var newEraWithdrawCollectFuncName = "NewEraWithdrawCollect"
@@ -48,16 +46,13 @@ func (t *Task) processPoolNewEraWithdrawCollect(poolAddr string) error {
 	if err != nil {
 		return err
 	}
-	if len(poolIca) < 2 {
-		return errors.New("ica data query failed")
-	}
 
 	logger := logrus.WithFields(logrus.Fields{
 		"pool":   poolAddr,
 		"action": newEraWithdrawCollectFuncName,
 	})
 
-	if !t.checkIcqSubmitHeight(poolIca[1].IcaAddr, BalancesQueryKind, poolInfo.EraSnapshot.LastStepHeight) {
+	if !t.checkIcqSubmitHeight(poolIca.WithdrawAddressIcaInfo.IcaAddr, BalancesQueryKind, poolInfo.EraSnapshot.LastStepHeight) {
 		logger.Warnln("withdraw address balance interchain query not ready")
 		return nil
 	}

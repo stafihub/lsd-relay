@@ -1,11 +1,9 @@
 package task
 
 import (
-	"errors"
-	"sync"
-
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/sirupsen/logrus"
+	"sync"
 )
 
 var newEraRebondFuncName = "NewEraRebond"
@@ -42,14 +40,6 @@ func (t *Task) processPoolNewEraRebond(poolAddr string) error {
 
 	if poolInfo.Status != WithdrawEnded {
 		return nil
-	}
-
-	poolIca, err := t.getPoolIcaInfo(poolInfo.IcaId)
-	if err != nil {
-		return err
-	}
-	if len(poolIca) < 2 {
-		return errors.New("ica data query failed")
 	}
 
 	logger := logrus.WithFields(logrus.Fields{
