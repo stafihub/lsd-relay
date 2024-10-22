@@ -46,10 +46,10 @@ func (t *Task) processPoolNewEraUpdate(poolAddr string) error {
 	if err != nil {
 		return err
 	}
-	targetEra := uint64(timestamp)/poolInfo.EraSeconds + poolInfo.Offset
+	targetEra := timestamp/int64(poolInfo.EraSeconds) + poolInfo.Offset
 
 	// check targetEra to skip
-	if targetEra <= poolInfo.Era {
+	if targetEra <= int64(poolInfo.Era) {
 		return nil
 	}
 
