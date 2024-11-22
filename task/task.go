@@ -2,12 +2,11 @@ package task
 
 import (
 	"errors"
-	"os"
-	"time"
-
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/stafihub/lsd-relay/pkg/config"
 	"github.com/stafihub/lsd-relay/pkg/utils"
+	"os"
+	"time"
 
 	"github.com/stafihub/neutron-relay-sdk/client"
 	"github.com/stafihub/neutron-relay-sdk/common/log"
@@ -19,6 +18,7 @@ type Task struct {
 	taskTicker          uint32
 	stop                chan struct{}
 	neutronClient       *client.Client
+	cosmosRestEndpoint  string
 	runForEntrustedPool bool
 	poolAddr            string
 	stakeManager        string
@@ -41,6 +41,7 @@ func NewTask(cfg *config.Config) (*Task, error) {
 		taskTicker:          cfg.TaskTicker,
 		stop:                make(chan struct{}),
 		poolAddr:            cfg.PoolAddr,
+		cosmosRestEndpoint:  cfg.CosmosRestEndpoint,
 		stakeManager:        cfg.StakeManager,
 		runForEntrustedPool: cfg.RunForEntrustedPool,
 	}

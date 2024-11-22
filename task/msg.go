@@ -42,6 +42,11 @@ type PoolAddr struct {
 	Addr string `json:"pool_addr"`
 }
 
+type PoolBond struct {
+	Addr       string   `json:"pool_addr"`
+	SelectVals []string `json:"select_vals"`
+}
+
 type QueryPoolInfoReq struct {
 	PoolInfo PoolAddr `json:"pool_info"`
 }
@@ -65,6 +70,7 @@ type QueryPoolInfoRes struct {
 	EraSnapshot               eraSnapshot `json:"era_snapshot"`
 	Paused                    bool        `json:"paused"`
 	LsmSupport                bool        `json:"lsm_support"`
+	ValidatorAddrs            []string    `json:"validator_addrs"`
 }
 
 type RegisterQueryInfoRes struct {
@@ -161,11 +167,11 @@ func getEraUpdateMsg(poolAddr string) []byte {
 	return marshal
 }
 
-func getEraBondMsg(poolAddr string) []byte {
+func getEraBondMsg(poolAddr string, selVals []string) []byte {
 	eraBondMsg := struct {
-		PoolAddr `json:"era_bond"`
+		PoolBond `json:"era_bond"`
 	}{
-		PoolAddr: PoolAddr{Addr: poolAddr},
+		PoolBond: PoolBond{Addr: poolAddr, SelectVals: selVals},
 	}
 	marshal, _ := json.Marshal(eraBondMsg)
 	return marshal
@@ -181,11 +187,11 @@ func getEraCollectWithdrawMsg(poolAddr string) []byte {
 	return marshal
 }
 
-func getEraRebondMsg(poolAddr string) []byte {
+func getEraRebondMsg(poolAddr string, selVals []string) []byte {
 	msg := struct {
-		PoolAddr `json:"era_rebond"`
+		PoolBond `json:"era_rebond"`
 	}{
-		PoolAddr: PoolAddr{Addr: poolAddr},
+		PoolBond: PoolBond{Addr: poolAddr, SelectVals: selVals},
 	}
 	marshal, _ := json.Marshal(msg)
 	return marshal

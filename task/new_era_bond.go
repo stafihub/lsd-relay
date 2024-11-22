@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/sirupsen/logrus"
+	"github.com/stafihub/lsd-relay/pkg/utils"
 )
 
 var newEraBondFuncName = "NewEraBond"
@@ -58,7 +59,11 @@ func (t *Task) processPoolNewEraBond(poolAddr string) error {
 		return err
 	}
 	ibcFeeCoins := types.NewCoins(types.NewCoin(t.neutronClient.GetDenom(), ibcFee))
-	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraBondMsg(poolAddr), ibcFeeCoins)
+	selVals, err := utils.SelectVals(poolInfo.ValidatorAddrs, poolInfo.Bond, poolInfo.Unbond, t.cosmosRestEndpoint)
+	if err != nil {
+		return err
+	}
+	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraBondMsg(poolAddr, selVals), ibcFeeCoins)
 	if err != nil {
 		logger.Warnf("failed, err: %s \n", err.Error())
 		return err

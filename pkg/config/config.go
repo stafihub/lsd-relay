@@ -19,7 +19,8 @@ type Config struct {
 	BackendOptions      string
 	RunForEntrustedPool bool
 
-	EndpointList []string
+	EndpointList       []string
+	CosmosRestEndpoint string
 
 	LogFilePath  string
 	KeystorePath string
