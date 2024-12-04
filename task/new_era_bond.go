@@ -59,7 +59,7 @@ func (t *Task) processPoolNewEraBond(poolAddr string) error {
 		return err
 	}
 	ibcFeeCoins := types.NewCoins(types.NewCoin(t.neutronClient.GetDenom(), ibcFee))
-	selVals, err := utils.SelectVals(poolInfo.ValidatorAddrs, poolInfo.Bond, poolInfo.Unbond, t.cosmosRestEndpoint)
+	selVals, err := utils.SelectVals(poolInfo.ValidatorAddrs, poolInfo.EraSnapshot.Bond, poolInfo.EraSnapshot.Unbond, t.cosmosRestEndpoint)
 	if err != nil {
 		return err
 	}
