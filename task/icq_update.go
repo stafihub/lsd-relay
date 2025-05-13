@@ -1,6 +1,10 @@
 package task
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
+	"github.com/stafihub/lsd-relay/pkg/utils"
+)
 
 var icqUpdateFuncName = "ExecuteValidatorsIcqUpdate"
 
@@ -58,4 +62,35 @@ func (t *Task) checkIcqSubmitHeight(icaAddr, queryKind string, lastStepHeight ui
 	}
 
 	return true
+}
+
+func (t *Task) checkDelegations(icaAddr string) bool {
+	delegations, err := t.GetDelegations(icaAddr)
+	if err != nil {
+		return false
+	}
+
+	total := decimal.Zero
+	for _, d := range delegations.Delegations {
+		amount, err := decimal.NewFromString(d.Amount.Amount)
+		if err != nil {
+			return false
+		}
+		total = total.Add(amount)
+	}
+
+	delegationsNative, err := utils.GetDelegatorDelegations(t.cosmosRestEndpoint, icaAddr)
+	if err != nil {
+		return false
+	}
+	totalNative := decimal.Zero
+	for _, d := range delegationsNative.DelegationResponses {
+		amount, err := decimal.NewFromString(d.Balance.Amount)
+		if err != nil {
+			return false
+		}
+		totalNative = totalNative.Add(amount)
+	}
+
+	return total.Equal(totalNative)
 }

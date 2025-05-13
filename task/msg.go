@@ -72,6 +72,17 @@ type QueryPoolInfoRes struct {
 	LsmSupport                bool        `json:"lsm_support"`
 	ValidatorAddrs            []string    `json:"validator_addrs"`
 }
+type DelegationsRes struct {
+	Delegations []struct {
+		Delegator string `json:"delegator"`
+		Validator string `json:"validator"`
+		Amount    struct {
+			Denom  string `json:"denom"`
+			Amount string `json:"amount"`
+		} `json:"amount"`
+	} `json:"delegations"`
+	LastSubmittedLocalHeight int `json:"last_submitted_local_height"`
+}
 
 type RegisterQueryInfoRes struct {
 	RegisteredQuery struct {
@@ -250,6 +261,20 @@ func (t *Task) getRegisteredIcqQuery(icaAddr, queryKind string) (*RegisterQueryI
 		return nil, err
 	}
 	var res RegisterQueryInfoRes
+	err = json.Unmarshal(rawRes.Data.Bytes(), &res)
+	if err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (t *Task) GetDelegations(icaAddr string) (*DelegationsRes, error) {
+	msg := fmt.Sprintf(`{"delegations":{"pool_addr":"%s","sdk_greater_or_equal_v047":true}}`, icaAddr)
+	rawRes, err := t.neutronClient.QuerySmartContractState(t.stakeManager, []byte(msg))
+	if err != nil {
+		return nil, err
+	}
+	var res DelegationsRes
 	err = json.Unmarshal(rawRes.Data.Bytes(), &res)
 	if err != nil {
 		return nil, err

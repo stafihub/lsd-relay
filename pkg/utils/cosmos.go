@@ -10,6 +10,46 @@ import (
 	"github.com/cosmos/cosmos-sdk/types"
 )
 
+type DelegatorDelegationsRes struct {
+	DelegationResponses []struct {
+		Delegation struct {
+			DelegatorAddress string `json:"delegator_address"`
+			ValidatorAddress string `json:"validator_address"`
+			Shares           string `json:"shares"`
+		} `json:"delegation"`
+		Balance struct {
+			Denom  string `json:"denom"`
+			Amount string `json:"amount"`
+		} `json:"balance"`
+	} `json:"delegation_responses"`
+	Pagination struct {
+		NextKey interface{} `json:"next_key"`
+		Total   string      `json:"total"`
+	} `json:"pagination"`
+}
+
+func GetDelegatorDelegations(endpoint, delegator string) (*DelegatorDelegationsRes, error) {
+	url := fmt.Sprintf("%s/cosmos/staking/v1beta1/delegations/%s", endpoint, delegator)
+	res, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("res status: %d", res.StatusCode)
+	}
+	bts, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	sp := DelegatorDelegationsRes{}
+	err = json.Unmarshal(bts, &sp)
+	if err != nil {
+		return nil, err
+	}
+	return &sp, nil
+}
+
 func GetStakingParams(endpoint string) (*StakingParamsRes, error) {
 	url := fmt.Sprintf("%s/cosmos/staking/v1beta1/params", endpoint)
 	res, err := http.Get(url)

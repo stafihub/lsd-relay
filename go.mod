@@ -6,6 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/cosmos/cosmos-sdk v0.47.6
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
+	github.com/shopspring/decimal v1.4.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/stafihub/neutron-relay-sdk v0.1.0

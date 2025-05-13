@@ -52,6 +52,12 @@ func (t *Task) processPoolNewEraActive(poolAddr string) error {
 		logger.Warnln("delegation interchain query not ready")
 		return nil
 	}
+
+	if !t.checkDelegations(poolAddr) {
+		logger.Warnln("delegation check failed")
+		return nil
+	}
+
 	txHash, err := t.neutronClient.SendContractExecuteMsg(t.stakeManager, getEraActiveMsg(poolAddr), nil)
 	if err != nil {
 		logger.Warnf("failed, err: %s \n", err.Error())
